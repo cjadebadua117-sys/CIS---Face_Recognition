@@ -1,0 +1,441 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-6">
+    <div class="glass rounded-3xl overflow-hidden border border-neon-cyan/20 shadow-[0_30px_60px_rgba(0,0,0,0.25)]">
+      <div class="relative bg-black overflow-hidden" style="aspect-ratio: 16 / 9; width:100%; max-width:100%; min-height:360px;">
+        <video id="attendanceCamera" autoplay muted playsinline class="absolute inset-0 w-full h-full" style="object-fit:cover; object-position:center center; transform: scaleX(-1);"></video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+
+
+        <!-- Confidence Score Overlay -->
+        <div id="confidenceOverlay" class="absolute bottom-4 left-4 px-4 py-2 rounded-full bg-black/70 border border-neon-cyan/30 text-neon-cyan font-mono text-sm opacity-0 transition-opacity duration-300">
+          <span id="confidenceScore">--</span>% Match
+        </div>
+
+        <!-- Face Detection Frame with Pulse Animation -->
+        <div class="absolute inset-0 pointer-events-none">
+          <div id="faceFrame" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-neon-cyan/70 rounded-3xl opacity-0 transition-opacity duration-300">
+            <div class="scanning-line"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6 border-t border-white/10 bg-slate-950/50">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <p class="text-sm uppercase tracking-[0.3em] text-cyan-300 font-semibold mb-2">Face Recognition Attendance</p>
+            <h2 class="text-3xl font-bold text-white">Scan your face to mark attendance</h2>
+            <p class="mt-2 text-sm text-slate-200 max-w-2xl">Select your active class on the right and tap scan. The system will use the live camera feed to verify your face.</p>
+            <div class="mt-4 rounded-3xl border border-white/10 bg-slate-950/80 p-4 text-slate-200">
+              <p class="text-sm font-medium text-white mb-2">How to mark attendance</p>
+              <ul class="list-disc list-inside space-y-1 text-sm">
+                <li>The instructor will open the attendance session for your subject.</li>
+                <li>Once the session is active, click <strong>Enable Camera</strong> to open your webcam.</li>
+                <li>If the session is active, click <strong>Mark Present</strong> while the camera is on.</li>
+                <li>If you are late, click <strong>Mark Late</strong> during the late window.</li>
+                <li>After the session time ends, attendance closes automatically.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            {% if not face_enrolled %}
+            <a href="{% url 'faces_enroll' %}" class="inline-flex items-center gap-2 rounded-2xl bg-yellow-500/20 border border-yellow-300/20 text-yellow-100 px-5 py-3 hover:bg-yellow-500/30 transition">
+              <i class="bi bi-person-plus"></i> Enroll Face
+            </a>
+            {% endif %}
+            <button id="enableCameraButton" class="inline-flex items-center gap-2 rounded-2xl bg-cyan-600 border border-cyan-400 text-white px-5 py-3 hover:bg-cyan-700 transition">Enable Camera</button>
+            <button id="captureButton" class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-neon-cyan to-neon-purple text-white px-5 py-3 hover:brightness-110 transition disabled:bg-slate-700 disabled:text-slate-200" disabled>Scan Attendance</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass rounded-3xl border border-white/10 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.22)]">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-semibold text-white">Live Scan Log</h3>
+          <p class="text-sm text-slate-200">Track camera access, scan attempts, and attendance results in real time.</p>
+        </div>
+      </div>
+      <div id="attendanceLog" class="space-y-3 max-h-72 overflow-y-auto">
+        <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-4 text-slate-200">
+          Waiting for camera activation and subject selection.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="space-y-6">
+    <div class="glass rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
+      <div class="p-6 border-b border-white/10">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-xl font-semibold text-white">Enrolled Subjects</h3>
+            <p class="text-sm text-slate-200">Tap a subject to scan your attendance when your instructor starts the session.</p>
+          </div>
+          <div class="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-3 py-1 text-cyan-200 text-xs uppercase tracking-[0.2em]">
+            <i class="bi bi-camera-video"></i> Live
+          </div>
+        </div>
+      </div>
+      <div class="p-6 space-y-4">
+        {% if subject_items %}
+            {% for item in subject_items %}
+                <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-800/90 border border-white/10 flex items-center justify-center text-neon-cyan shadow-[0_0_20px_rgba(56,189,248,0.12)]">
+                            <i class="bi bi-journal-text text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold text-white">{{ item.subject.code }}</div>
+                            <div class="text-sm text-slate-200">{{ item.subject.name }}</div>
+                            <div class="mt-3 space-y-3">
+                                {% if item.active_session %}
+                                    <div class="grid gap-3 sm:grid-cols-[repeat(2,minmax(0,1fr))]">
+                                        <button type="button" class="subject-camera-button inline-flex items-center justify-center gap-2 rounded-3xl bg-slate-700/90 border border-white/10 px-4 py-2 text-white text-sm shadow-lg shadow-white/10 hover:bg-slate-600 transition" data-session-id="{{ item.active_session.id }}" data-session-action="camera-only" {% if not item.active_session.camera_enabled %}disabled{% endif %}>
+                                            <i class="bi bi-camera-video text-white"></i>
+                                            Open Camera
+                                        </button>
+
+                                        {% if item.active_session.get_status_for_scan == 'PRESENT' %}
+                                            <button type="button" class="attendance-scan-button subject-scan-button inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold px-4 py-2 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-300/30 transition" data-session-id="{{ item.active_session.id }}" data-session-action="present">
+                                                <i class="bi bi-camera-reels text-white"></i> Mark Present
+                                            </button>
+                                        {% elif item.active_session.get_status_for_scan == 'LATE' %}
+                                            <button type="button" class="attendance-scan-button subject-scan-button inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-semibold px-4 py-2 shadow-lg shadow-amber-500/20 hover:shadow-amber-300/30 transition" data-session-id="{{ item.active_session.id }}" data-session-action="late">
+                                                <i class="bi bi-clock text-slate-950"></i> Mark Late
+                                            </button>
+                                        {% else %}
+                                            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-3xl bg-slate-700/90 border border-slate-600 px-4 py-2 text-slate-200 cursor-not-allowed" disabled>
+                                                <i class="bi bi-x-circle text-slate-200"></i> Attendance Closed
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    {% if item.active_session.is_open and not item.active_session.is_after_schedule_end %}
+                                        <div class="text-xs text-slate-200">Session is open. Tap Camera to activate video, then mark Present or Late based on the session time.</div>
+                                    {% elif item.active_session.get_status_for_scan == 'LATE' %}
+                                        <div class="text-xs text-yellow-300">Session is open and in the late window. You may still open the camera preview, but only Late check-in is allowed.</div>
+                                    {% else %}
+                                        <div class="text-xs text-slate-200">This session has ended. Attendance is now closed.</div>
+                                    {% endif %}
+                                {% else %}
+                                    <button type="button" class="subject-scan-button inline-flex items-center gap-2 rounded-3xl bg-gradient-to-r from-neon-cyan to-neon-purple text-slate-950 font-semibold px-4 py-2 shadow-lg shadow-cyan-500/20 cursor-not-allowed transition" data-session-id="" data-session-action="camera-only" disabled>
+                                        <i class="bi bi-camera-video text-slate-950"></i> Open Camera
+                                    </button>
+                                    <div class="text-xs text-slate-200 mt-2">No active session. Waiting for your instructor to start attendance.</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-4 text-slate-200">
+              No subjects found. Complete your enrollment to enable attendance scanning.
+            </div>
+        {% endif %}
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+const video = document.getElementById('attendanceCamera');
+const captureButton = document.getElementById('captureButton');
+const enableCameraButton = document.getElementById('enableCameraButton');
+const attendanceLog = document.getElementById('attendanceLog');
+let cameraStream = null;
+let selectedSessionId = null;
+let selectedSessionAction = 'present';
+
+function stopCameraStream() {
+    if (!cameraStream) return;
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+    video.srcObject = null;
+    captureButton.disabled = true;
+}
+
+function hasAvailableCameraSession() {
+    return document.querySelector('.subject-camera-button:not([disabled])') !== null;
+}
+
+function isSessionCameraEnabled(sessionId) {
+    const button = document.querySelector(`.subject-camera-button[data-session-id="${sessionId}"]`);
+    return button ? !button.disabled : false;
+}
+
+function logEvent(message, level = 'info') {
+    const entry = document.createElement('div');
+    entry.className = 'rounded-3xl border border-white/10 bg-slate-950/80 p-4 text-sm';
+    if (level === 'success') {
+        entry.classList.add('border-green-400/20', 'text-emerald-300');
+    } else if (level === 'error') {
+        entry.classList.add('border-rose-400/20', 'text-rose-300');
+    } else {
+        entry.classList.add('text-slate-200');
+    }
+    entry.innerHTML = `<div class="font-mono text-xs text-slate-500 mb-2">[${new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', hour12: true })}]</div><div>${message}</div>`;
+    attendanceLog.prepend(entry);
+    if (attendanceLog.children.length > 10) {
+        attendanceLog.removeChild(attendanceLog.lastChild);
+    }
+}
+
+function showConfirmation(record) {
+    // Create confirmation modal
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="glass rounded-3xl border border-white/10 p-8 max-w-md mx-4 text-center">
+            <div class="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="bi bi-check-circle text-3xl text-green-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Attendance Recorded!</h3>
+            <div class="space-y-2 text-sm text-slate-200 mb-6">
+                <p><strong>Subject:</strong> ${record.schedule.subject_name}</p>
+                <p><strong>Time:</strong> ${new Date(record.check_in_time).toLocaleString('en-US', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}</p>
+                <p><strong>Status:</strong> <span class="${record.status === 'PRESENT' ? 'text-green-400' : 'text-yellow-400'}">${record.status_display}</span></p>
+            </div>
+            <button onclick="this.closest('.fixed').remove()" class="inline-flex items-center gap-2 rounded-2xl bg-cyan-500/20 border border-cyan-400/30 px-6 py-3 text-cyan-100 hover:bg-cyan-500/30 transition">
+                Continue
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+async function enableCamera() {
+    if (!selectedSessionId) {
+        const firstButton = document.querySelector('.subject-camera-button[data-session-id]:not([disabled])');
+        if (!firstButton) {
+            logEvent('No active attendance session is open. Wait for your instructor to start the session.', 'error');
+            return;
+        }
+        selectSession(firstButton.dataset.sessionId);
+    }
+
+    if (!isSessionCameraEnabled(selectedSessionId)) {
+        stopCameraStream();
+        logEvent('Camera access has been disabled for the selected session.', 'error');
+        return;
+    }
+
+    if (cameraStream) {
+        return;
+    }
+
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        video.srcObject = cameraStream;
+        await video.play();
+        captureButton.disabled = false;
+        logEvent('Camera enabled. Position your face inside the scanning frame.', 'success');
+    } catch (error) {
+        logEvent('Unable to access camera. Please allow camera permission.', 'error');
+        console.error('Camera error:', error);
+    }
+}
+
+enableCameraButton.addEventListener('click', async () => {
+    const firstButton = document.querySelector('.subject-camera-button[data-session-id]:not([disabled])');
+    if (!selectedSessionId && firstButton) {
+        selectSession(firstButton.dataset.sessionId);
+    }
+
+    if (!hasAvailableCameraSession()) {
+        logEvent('No camera session is currently active. Please ask your instructor to open attendance first.', 'error');
+        return;
+    }
+
+    await enableCamera();
+    if (cameraStream) {
+        logEvent('Camera enabled. You can now scan when a session is active.', 'success');
+    }
+});
+
+function selectSession(sessionId) {
+    selectedSessionId = sessionId;
+    const selectedButton = document.querySelector(`.attendance-scan-button[data-session-id="${sessionId}"]`);
+    selectedSessionAction = selectedButton ? (selectedButton.dataset.sessionAction || 'present') : 'present';
+
+    document.querySelectorAll('.attendance-scan-button').forEach(button => {
+        button.classList.remove('bg-green-500/30', 'bg-yellow-500/30', 'text-white');
+        if (button.dataset.sessionId !== sessionId.toString()) {
+            button.classList.add('bg-green-500/20', 'text-green-100');
+        }
+    });
+
+    if (selectedButton) {
+        if (selectedSessionAction === 'present') {
+            selectedButton.classList.remove('bg-green-500/20');
+            selectedButton.classList.add('bg-green-500/30', 'text-white');
+        } else if (selectedSessionAction === 'late') {
+            selectedButton.classList.remove('bg-yellow-500/20');
+            selectedButton.classList.add('bg-yellow-500/30', 'text-white');
+        }
+    }
+
+    updateCaptureButtonState();
+    logEvent('Selected active session for scan.', 'info');
+}
+
+function updateCaptureButtonState() {
+    const selectedButton = document.querySelector(`.attendance-scan-button[data-session-id="${selectedSessionId}"]`);
+    if (!selectedButton) {
+        captureButton.disabled = true;
+        return;
+    }
+
+    selectedSessionAction = selectedButton.dataset.sessionAction || 'present';
+    const cameraAllowed = isSessionCameraEnabled(selectedSessionId);
+
+    captureButton.textContent = selectedSessionAction === 'late' ? 'Mark Late' : 'Mark Present';
+    captureButton.disabled = selectedButton.disabled || (selectedSessionAction === 'present' && !cameraAllowed);
+}
+
+function captureFrame() {
+    if (!cameraStream || !selectedSessionId) {
+        if (!cameraStream) logEvent('Camera is not active yet. Click Enable Camera first.', 'error');
+        if (!selectedSessionId) logEvent('Please select an active session to scan.', 'error');
+        return null;
+    }
+
+    if (!isSessionCameraEnabled(selectedSessionId)) {
+        stopCameraStream();
+        logEvent('The selected session is closed or camera access has been disabled. Please wait for your instructor.', 'error');
+        return null;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+
+    // If the preview is mirrored for the user, capture the correct non-mirrored image.
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.85);
+}
+
+async function performAttendanceScan(sessionId, action = 'present') {
+    const csrfToken = getCookie('csrftoken');
+
+    const body = {
+        session_id: sessionId,
+        action,
+    };
+
+    if (action === 'present') {
+        if (!cameraStream) {
+            await enableCamera();
+            if (!cameraStream) return;
+        }
+
+        const image = captureFrame();
+        if (!image) return;
+        body.image = image;
+        logEvent('Capturing image and checking attendance...', 'info');
+    } else if (action === 'late') {
+        logEvent('Marking attendance as late...', 'info');
+    }
+
+    try {
+        const response = await fetch('/api/attendance/check-in/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify(body),
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            logEvent(result.message || 'Attendance scanned successfully.', 'success');
+            showToast(result.message || 'Attendance recorded successfully!', 'success');
+            
+            // Show confirmation
+            showConfirmation(result.record);
+            
+            // Disable the button after successful scan
+            const button = document.querySelector(`.attendance-scan-button[data-session-id="${sessionId}"]`);
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-check-circle"></i> Recorded';
+                button.classList.remove('bg-green-500/30', 'bg-yellow-500/30', 'hover:bg-green-500/30', 'hover:bg-yellow-500/30');
+                button.classList.add('bg-gray-500/20', 'text-gray-100', 'cursor-not-allowed');
+            }
+        } else {
+            logEvent(result.error || 'Attendance scan failed.', 'error');
+            showToast(result.error || 'Attendance scan failed. Please try again.', 'error');
+        }
+    } catch (error) {
+        logEvent('Attendance request failed. Check your network and try again.', 'error');
+        console.error('Attendance scan error:', error);
+    }
+}
+
+captureButton.addEventListener('click', () => {
+    if (!selectedSessionId) {
+        logEvent('Select an active session before scanning.', 'error');
+        return;
+    }
+    performAttendanceScan(selectedSessionId, selectedSessionAction);
+});
+
+document.querySelectorAll('.subject-scan-button').forEach(button => {
+    button.addEventListener('click', () => {
+        const sessionId = button.dataset.sessionId;
+        const action = button.dataset.sessionAction || 'present';
+        selectSession(sessionId);
+        performAttendanceScan(sessionId, action);
+    });
+});
+
+document.querySelectorAll('.subject-camera-button').forEach(button => {
+    button.addEventListener('click', async () => {
+        const sessionId = button.dataset.sessionId;
+        selectSession(sessionId);
+        if (button.disabled) {
+            logEvent('Camera access has been disabled for this session.', 'error');
+            return;
+        }
+        await enableCamera();
+        if (cameraStream) {
+            logEvent('Camera opened. Waiting for active attendance session.', 'info');
+        }
+    });
+});
+
+function updateCountdowns() {
+    document.querySelectorAll('[id^="countdown-"]').forEach(element => {
+        const sessionId = element.id.replace('countdown-', '');
+        // In a real implementation, you'd fetch updated countdown data from the server
+        // For now, we'll just update the display based on elapsed time
+    });
+}
+
+// Update countdowns every minute
+setInterval(updateCountdowns, 60000);
+
+window.addEventListener('load', () => {
+    const firstSessionButton = document.querySelector('.attendance-scan-button:not([disabled])');
+    if (firstSessionButton) {
+        selectSession(firstSessionButton.dataset.sessionId);
+    }
+    enableCameraButton.disabled = !hasAvailableCameraSession();
+    updateCaptureButtonState();
+});
+</script>
+{% endblock %}

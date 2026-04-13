@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login - CIS Face Recognition Attendance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .login-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: var(--text-primary);
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .login-header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+    .login-header p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+
+    .login-body {
+        padding: 2rem;
+        background-color: var(--bg-card);
+    }
+
+    .form-group-floating {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group-floating input {
+        padding-right: 2.5rem;
+    }
+
+    .form-group-floating .input-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #6c757d;
+        font-size: 1.2rem;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+    }
+
+    .form-group-floating .input-icon:hover {
+        color: #495057;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .btn-signin {
+        background-color: #667eea;
+        border-color: #667eea;
+        font-weight: 600;
+        padding: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-signin:hover {
+        background-color: #5568d3;
+        border-color: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-signin:active {
+        transform: translateY(0);
+    }
+
+    .btn-signin.loading {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+        border-width: 0.2em;
+    }
+
+    .alert-dismissible {
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .form-check {
+        margin-bottom: 1rem;
+    }
+
+    .form-check-label {
+        margin-left: 0.5rem;
+        cursor: pointer;
+        user-select: none;
+        font-size: 0.95rem;
+        color: #495057;
+    }
+
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+
+    .login-footer {
+        text-align: center;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .login-footer a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+    .login-footer a:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
+
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+
+    /* Shake animation for failed login */
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
+    form.shake {
+        animation: shake 0.5s ease-in-out;
+    }
+
+    .help-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .session-warning {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 1050;
+    }
+
+    @media (max-width: 576px) {
+        .login-container {
+            padding: 1rem;
+        }
+
+        .login-card {
+            border-radius: 8px;
+        }
+
+        .login-header {
+            padding: 1.5rem;
+        }
+
+        .login-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .login-body {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="card login-card">
+        <div class="login-header">
+            <h1>CIS</h1>
+            <p>Face Recognition Attendance System</p>
+        </div>
+
+        <div class="login-body">
+
+            <!-- Login Form -->
+            <form method="post" id="login-form" novalidate>
+                {% csrf_token %}
+
+                <!-- Username/Email Field -->
+                <div class="form-group-floating">
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="invalid-feedback d-block">{{ form.username.errors.0 }}</div>
+                    {% endif %}
+                    <small class="help-text">Enter your email address or username</small>
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group-floating">
+                    <div style="position: relative;">
+                        {{ form.password }}
+                        <span class="input-icon" id="toggle-password" title="Show/Hide password">
+                            <i class="bi bi-eye"></i>
+                        </span>
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="invalid-feedback d-block">{{ form.password.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Remember Me Checkbox -->
+                <div class="form-check">
+                    {{ form.remember_me }}
+                    <label class="form-check-label" for="id_remember_me">
+                        Remember me
+                    </label>
+                </div>
+
+                <!-- Sign In Button -->
+                <button type="submit" class="btn btn-signin btn-primary w-100 fw-bold" id="signin-btn">
+                    <span class="btn-text">Sign In</span>
+                </button>
+
+                <!-- Links -->
+                <div class="login-footer">
+                    <div>
+                        <a href="#">Forgot Password?</a>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        Don't have an account? <a href="{% url 'register' %}">Create one</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Session Timeout Warning Modal -->
+<div class="modal fade" id="sessionWarningModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Session Timeout Warning</h5>
+            </div>
+            <div class="modal-body">
+                <p>Your session will expire in <span id="countdown">5</span> minutes due to inactivity.</p>
+                <p>Click the button below to continue your session.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="logout-btn">Logout</button>
+                <button type="button" class="btn btn-warning" id="continue-session-btn">Continue Session</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus username field
+    document.getElementById('id_username').focus();
+
+    // Show/Hide password toggle
+    const togglePasswordBtn = document.getElementById('toggle-password');
+    const passwordField = document.getElementById('id_password');
+    
+    if (togglePasswordBtn) {
+        togglePasswordBtn.addEventListener('click', function() {
+            const type = passwordField.type === 'password' ? 'text' : 'password';
+            passwordField.type = type;
+            
+            // Toggle icon
+            this.innerHTML = type === 'password' 
+                ? '<i class="bi bi-eye"></i>' 
+                : '<i class="bi bi-eye-slash"></i>';
+        });
+    }
+});
+</script>
+{% endblock %}

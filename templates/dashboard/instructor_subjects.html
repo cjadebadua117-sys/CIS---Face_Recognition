@@ -1,0 +1,96 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load crispy_forms_tags %}
+
+{% block dashboard_title %}My Subjects{% endblock %}
+
+{% block title %}My Subjects{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-end align-items-center mb-4">
+                <a href="{% url 'add_subject' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New Subject
+                </a>
+            </div>
+
+
+            <div class="row">
+                {% for subject in subjects %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">{{ subject.code }}</h5>
+                                {% if subject.is_archived %}
+                                    <span class="badge bg-secondary">Archived</span>
+                                {% endif %}
+                            </div>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'edit_subject' subject.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <a href="{% url 'archive_subject' subject.id %}" class="btn btn-sm btn-outline-secondary">
+                                    {% if subject.is_archived %}Unarchive{% else %}Archive{% endif %}
+                                </a>
+                                <form action="{% url 'delete_subject' subject.id %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this subject and all its sections?');">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">{{ subject.name }}</h6>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    {{ subject.semester }} {{ subject.school_year }}
+                                </small>
+                            </p>
+
+                            <div class="mb-3">
+                                <h6>Sections:</h6>
+                                {% for section in subject.sections.all %}
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <strong>{{ section.name }}</strong>
+                                        <div class="small text-muted">{{ section.schedule_day }} {{ section.schedule_time|time:'g:i a' }} • {{ section.room|default:'No room' }}</div>
+                                    </div>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'section_attendance' subject.id section.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                        <a href="{% url 'edit_section' subject.id section.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                        <form action="{% url 'delete_section' subject.id section.id %}" method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this section?');">Delete</button>
+                                        </form>
+                                        {% if section.schedule_day == today_name %}
+                                        <a href="{% url 'open_section_attendance' subject.id section.id %}" class="btn btn-sm btn-secondary">Start</a>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled title="Scheduled on {{ section.schedule_day }}">Start Attendance</button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p class="text-muted small">No sections yet</p>
+                                {% endfor %}
+                            </div>
+
+                            <a href="{% url 'add_section' subject.id %}" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus"></i> Add Section
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                        <h4>No subjects yet</h4>
+                        <p class="text-muted">Start by adding your first subject</p>
+                        <a href="{% url 'add_subject' %}" class="btn btn-primary">Add New Subject</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

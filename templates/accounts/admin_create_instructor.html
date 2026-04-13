@@ -1,0 +1,121 @@
+{% extends 'accounts/admin_base.html' %}
+{% block admin_page_title %}Create Instructor{% endblock %}
+
+{% block extra_css %}
+<style>
+    .password-input-wrapper {
+        position: relative;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .password-input-wrapper .toggle-password {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 2.4rem;
+        height: 2.4rem;
+        border: none;
+        border-radius: 0.75rem;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .password-input-wrapper .toggle-password:hover {
+        background: rgba(255, 255, 255, 0.16);
+        color: var(--accent);
+    }
+
+    .password-input-wrapper input.form-control {
+        padding-right: 3.25rem;
+        background: var(--bg-surface) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text-primary) !important;
+        box-shadow: none !important;
+    }
+
+    .password-input-wrapper input.form-control:focus {
+        background: var(--bg-surface) !important;
+        border-color: var(--accent) !important;
+        box-shadow: none !important;
+    }
+
+    .password-input-wrapper input.form-control::placeholder {
+        color: var(--text-muted) !important;
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Create Instructor Account</h2>
+        <p class="text-muted admin-card-subtitle">Only admins can create instructor accounts.</p>
+    </div>
+
+    <div class="card p-4 shadow-sm">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {% if field.name == 'password1' or field.name == 'password2' %}
+                        <div class="password-input-wrapper">
+                            {{ field }}
+                            <button type="button" class="toggle-password" data-target="{{ field.id_for_label }}" title="Show/Hide password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    {% if field.errors %}
+                        <p class="text-danger small">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Create Instructor</button>
+            <a href="{% url 'admin_instructor_list' %}" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleButtons = document.querySelectorAll('.toggle-password');
+
+        toggleButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                const targetId = button.dataset.target;
+                const input = targetId ? document.getElementById(targetId) : button.closest('.password-input-wrapper')?.querySelector('input[type="password"], input[type="text"]');
+                if (!input) return;
+
+                const icon = button.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    if (icon) {
+                        icon.classList.remove('bi-eye');
+                        icon.classList.add('bi-eye-slash');
+                    }
+                } else {
+                    input.type = 'password';
+                    if (icon) {
+                        icon.classList.remove('bi-eye-slash');
+                        icon.classList.add('bi-eye');
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+

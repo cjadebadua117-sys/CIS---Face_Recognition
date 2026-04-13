@@ -1,0 +1,28 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block dashboard_title %}Edit Subject{% endblock %}
+{% block title %}Edit Subject{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <p class="text-muted">Update the section, semester, and academic year for {{ subject.code }}.</p>
+    </div>
+
+    <div class="card shadow-sm p-4">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <p class="text-danger small">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Save Subject</button>
+            <a href="{% url 'instructor_subjects' %}" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

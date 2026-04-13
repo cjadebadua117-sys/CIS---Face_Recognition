@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Select Year Level and Section - CIS Enrollment{% endblock %}
+
+{% block extra_css %}
+<style>
+    .enrollment-container {
+        max-width: 600px;
+        margin: 3rem auto;
+        background: var(--bg-card);
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    .enrollment-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 1rem;
+    }
+
+    .enrollment-header h1 {
+        color: var(--text-primary);
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .enrollment-header p {
+        color: #cbd5e1;
+        font-size: 0.95rem;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section label {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .option-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .option-label {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border: 2px solid #334155;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #111827;
+    }
+
+    .option-label:hover {
+        border-color: #667eea;
+        background: #111827;
+    }
+
+    .option-label input[type="radio"] {
+        margin-right: 0.75rem;
+        cursor: pointer;
+    }
+
+    .option-label input[type="radio"]:checked + span {
+        color: #667eea;
+        font-weight: 600;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: var(--text-primary);
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="enrollment-container">
+    <div class="enrollment-header">
+        <h1>Subject Enrollment</h1>
+        <p>Step 1: Select Your Year Level and Section</p>
+    </div>
+
+
+    <form method="POST" id="enrollmentForm">
+        {% csrf_token %}
+
+        <div class="form-section">
+            <label for="yearLevel">Year Level *</label>
+            <div class="option-group" id="yearLevelGroup">
+                {% for value, label in year_choices %}
+                    <label class="option-label">
+                        <input type="radio" name="year_level" value="{{ value }}" required>
+                        <span>{{ label }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <label for="section">Section *</label>
+            <div class="option-group" id="sectionGroup">
+                {% for value, label in section_choices %}
+                    <label class="option-label">
+                        <input type="radio" name="section" value="{{ value }}" required>
+                        <span>{{ label }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">Continue to Subject Selection</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('enrollmentForm').addEventListener('submit', function(e) {
+        const yearLevel = document.querySelector('input[name="year_level"]:checked');
+        const section = document.querySelector('input[name="section"]:checked');
+        
+        if (!yearLevel || !section) {
+            e.preventDefault();
+            alert('Please select both year level and section.');
+        }
+    });
+</script>
+{% endblock %}

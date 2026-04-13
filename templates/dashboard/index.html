@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load tz %}
+{% block content %}
+<main style="width: 100%; padding: 2rem 1.5rem;">
+    <section>
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">Dashboard Overview</h1>
+            <p class="page-subtitle">Welcome back! Here's your attendance summary and upcoming schedule.</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-3" style="margin-bottom: 2rem;">
+            <div class="stat-card success">
+                <div class="stat-label">Present Today</div>
+                <div class="stat-value">{{ total_present }}</div>
+                <div class="stat-meta">
+                    <i class="bi bi-check-circle-fill" style="color: var(--success);"></i> Active
+                </div>
+            </div>
+
+            <div class="stat-card warning">
+                <div class="stat-label">Late Today</div>
+                <div class="stat-value">{{ total_late }}</div>
+                <div class="stat-meta">
+                    <i class="bi bi-clock-fill" style="color: var(--warning);"></i> Monitoring
+                </div>
+            </div>
+
+            <div class="stat-card danger">
+                <div class="stat-label">Absent Today</div>
+                <div class="stat-value">{{ total_absent }}</div>
+                <div class="stat-meta">
+                    <i class="bi bi-x-circle-fill" style="color: var(--danger);"></i> Attention
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem;">Weekly Attendance Trend</h3>
+            <div style="position: relative; height: 200px;">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Next Class -->
+        {% if next_class %}
+        <div class="card" style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <span class="badge badge-info">
+                    <i class="bi bi-calendar-event"></i> Next Class
+                </span>
+            </div>
+            <h2 style="margin-bottom: 0.5rem;">{{ next_class.schedule.subject.name }}</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                <i class="bi bi-clock"></i> {{ next_class.schedule.start_time|time:'h:i A' }} - {{ next_class.schedule.end_time|time:'h:i A' }}
+                {% if next_class.schedule.room %}
+                    &nbsp;&nbsp;<i class="bi bi-geo-alt"></i> Room {{ next_class.schedule.room }}
+                {% endif %}
+            </p>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <a href="{% url 'attendance_start' %}" class="btn btn-primary">
+                    <i class="bi bi-play-circle"></i> Start Attendance
+                </a>
+                <button class="btn btn-secondary">
+                    <i class="bi bi-info-circle"></i> View Details
+                </button>
+            </div>
+        </div>
+        {% endif %}
+{% load tz %}
+
+        <!-- Recent Activity -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem;">Recent Activity</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for record in recent_records %}
+                    <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--bg-surface); border-radius: 8px;">
+                        <div style="color: var(--accent);">
+                            <i class="bi bi-circle-fill" style="font-size: 0.6rem;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500;">{% if record.user.first_name or record.user.last_name %}{{ record.user.first_name }} {{ record.user.last_name }}{% else %}{{ record.user.username }}{% endif %} - {{ record.get_status_display }}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">{{ record.date|date:'M d, Y' }} at {% if record.check_in_time %}{{ record.check_in_time|localtime|time:'g:i a' }}{% else %}&mdash;{% endif %}</div>
+                        </div>
+                        <span class="badge badge-{% if record.status == 'PRESENT' %}success{% elif record.status == 'LATE' %}warning{% else %}danger{% endif %}">
+                            {{ record.get_status_display }}
+                        </span>
+                    </div>
+                {% empty %}
+                    <p style="text-align: center; color: var(--text-muted); padding: 2rem;">No recent activity</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Actions & System Status -->
+        <div class="grid grid-2">
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;">Quick Actions</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <a href="{% url 'attendance_start' %}" class="btn btn-primary">
+                        <i class="bi bi-camera-video"></i> Start Attendance Session
+                    </a>
+                    <a href="{% url 'attendance_records' %}" class="btn btn-secondary">
+                        <i class="bi bi-table"></i> View Attendance History
+                    </a>
+                    <a href="{% url 'faces_enroll' %}" class="btn btn-secondary">
+                        <i class="bi bi-person-plus"></i> Enroll Face
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;">System Status</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></span>
+                        <span>Face Recognition Engine</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></span>
+                        <span>Database Connection</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></span>
+                        <span>Real-time Processing</span>
+                    </div>
+                </div>
+                <div style="padding: 1rem; background: var(--bg-surface); border-radius: 8px;">
+                    <strong><i class="bi bi-lightbulb"></i> Pro Tip</strong>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                        Face recognition works best in good lighting. Admin users can add or remove people from the enrollment list.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('trendChart');
+if (ctx) {
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ trend_labels|safe }},
+            datasets: [{
+                label: 'Present Students',
+                data: {{ trend_values|safe }},
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1,
+                borderRadius: 6,
+                borderSkipped: false,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    ticks: {
+                        color: 'var(--text-muted)',
+                    },
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    ticks: {
+                        color: 'var(--text-muted)',
+                    },
+                },
+            },
+        },
+    });
+}
+</script>
+{% endblock %}
+{% endblock %}

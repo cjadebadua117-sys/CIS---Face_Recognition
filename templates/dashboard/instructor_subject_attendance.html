@@ -1,0 +1,123 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block dashboard_title %}Attendance for {{ subject.code }}{% endblock %}
+{% block title %}Subject Attendance{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <p class="text-muted">Review attendance history and status by date.</p>
+        </div>
+        <a href="{% url 'instructor_subjects' %}" class="btn btn-outline-secondary">Back to Subjects</a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card p-4 shadow-sm">
+                <h5>Present</h5>
+                <p class="display-6 mb-0">{{ summary.present|default:0 }}</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 shadow-sm">
+                <h5>Late</h5>
+                <p class="display-6 mb-0">{{ summary.late|default:0 }}</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 shadow-sm">
+                <h5>Absent</h5>
+                <p class="display-6 mb-0">{{ summary.absent|default:0 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Date from</label>
+                    <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Date to</label>
+                    <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Attendance by Date</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Present</th>
+                        <th>Late</th>
+                        <th>Absent</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in attendance_by_date %}
+                        <tr>
+                            <td>{{ row.date|date:'M d, Y' }}</td>
+                            <td>{{ row.present }}</td>
+                            <td>{{ row.late }}</td>
+                            <td>{{ row.absent }}</td>
+                            <td>{{ row.total }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No attendance records found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Attendance</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Status</th>
+                        <th>Schedule</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in student_records %}
+                        <tr>
+                            <td>{{ record.date|date:'M d, Y' }}</td>
+                            <td>{% if record.user.first_name or record.user.last_name %}{{ record.user.first_name }} {{ record.user.last_name }}{% else %}{{ record.user.username }}{% endif %}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if record.status == 'PRESENT' else 'warning' if record.status == 'LATE' else 'danger' }}">
+                                    {{ record.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ record.schedule.subject.code if record.schedule else 'N/A' }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No records available for this subject.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

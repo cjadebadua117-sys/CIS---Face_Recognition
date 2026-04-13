@@ -1,0 +1,750 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+main {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+}
+.admin-container {
+    display: flex !important;
+    flex-direction: row !important;
+    min-height: 100vh;
+    position: relative;
+    width: 100%;
+    overflow-x: hidden !important;
+    background: var(--bg);
+}
+
+.admin-sidebar {
+    width: 280px !important;
+    min-width: 280px !important;
+    background: rgba(12, 17, 33, 0.96) !important;
+    border-right: 1px solid rgba(148, 163, 184, 0.12) !important;
+    padding: 2.25rem 1.75rem !important;
+    position: fixed !important;
+    top: 70px !important;
+    left: 0 !important;
+    height: calc(100vh - 70px) !important;
+    overflow-y: auto !important;
+    z-index: 100;
+    transition: width 0.25s ease, padding 0.25s ease, background 0.25s ease !important;
+    box-shadow: inset -1px 0 0 rgba(148, 163, 184, 0.08) !important, 0 24px 60px rgba(0, 0, 0, 0.20) !important;
+    scrollbar-width: thin;
+    -ms-overflow-style: auto;
+}
+
+.admin-sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3) !important;
+    border-radius: 999px;
+}
+
+.admin-main {
+    flex: 1;
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    transition: margin-left 0.25s ease !important;
+    padding: 2rem 2.5rem !important;
+}
+
+.admin-card,
+.admin-card .card,
+.table-responsive,
+.table-responsive .table {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.admin-card {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.admin-sidebar.closed {
+    width: 84px !important;
+    min-width: 84px !important;
+    padding: 1.75rem 0 !important;
+    background: rgba(12, 17, 33, 0.95) !important;
+    border-right: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    height: auto !important;
+    position: fixed !important;
+}
+
+.admin-sidebar.closed .admin-sidebar-header,
+.admin-sidebar.closed .admin-sidebar-toggle,
+.admin-sidebar.closed .admin-sidebar-toggle i {
+    display: inline-flex !important;
+}
+
+.admin-sidebar-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1.25rem 1.35rem;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.admin-sidebar-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 240, 0.98);
+    margin-bottom: 0.15rem;
+}
+
+.admin-sidebar-subtitle {
+    font-size: 0.78rem;
+    color: rgba(148, 163, 184, 0.9);
+    line-height: 1.5;
+}
+
+.admin-sidebar-toggle {
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(148, 163, 184, 0.08) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.admin-sidebar-toggle:hover {
+    background: rgba(148, 163, 184, 0.16) !important;
+    transform: translateY(-1px);
+}
+
+.admin-sidebar-toggle i {
+    color: rgba(226, 232, 240, 0.95);
+    font-size: 1.15rem;
+}
+
+.admin-sidebar.closed .admin-sidebar-header {
+    justify-content: center !important;
+    width: 100% !important;
+}
+
+.admin-sidebar.closed .admin-sidebar-header > div,
+.admin-sidebar.closed .admin-nav-section,
+.admin-sidebar.closed .admin-nav-item,
+.admin-sidebar.closed .admin-nav-title,
+.admin-sidebar.closed .admin-nav-item .nav-text {
+    display: none !important;
+}
+
+.admin-sidebar.closed .admin-sidebar-toggle {
+    margin: 0 auto;
+    width: 44px;
+    height: 44px;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08) !important;
+    cursor: pointer;
+    z-index: 101 !important;
+}
+
+.admin-sidebar.closed .admin-sidebar-toggle i {
+    color: var(--text-primary) !important;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.admin-sidebar.closed + .admin-main,
+.admin-main.collapsed {
+    margin-left: 84px !important;
+    width: calc(100% - 84px) !important;
+    max-width: none !important;
+}
+
+.admin-sidebar-toggle:hover {
+    color: var(--accent);
+}
+
+.admin-nav-section {
+    margin-bottom: 1.75rem !important;
+    padding: 1rem 1rem 1.1rem 1rem !important;
+    border-radius: 24px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(148, 163, 184, 0.08) !important;
+}
+
+.admin-nav-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.95);
+    letter-spacing: 0.14em;
+    margin-bottom: 1rem;
+    padding-left: 0.25rem;
+}
+
+.admin-nav-item {
+    display: flex;
+    align-items: center;
+        justify-content: space-between;
+        gap: 0.9rem;
+        padding: 0.95rem 1rem;
+        color: rgba(226, 232, 240, 0.95);
+        text-decoration: none;
+        border-radius: 18px;
+        margin-bottom: 0.75rem;
+        transition: all 0.22s ease;
+        border: 1px solid transparent;
+        background: transparent;
+        min-height: 56px;
+        width: 100%;
+        min-width: 2.2rem;
+        min-height: 2.2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--accent);
+    }
+
+    .admin-nav-item .nav-text {
+        flex: 1;
+        color: rgba(226, 232, 240, 0.9);
+        font-weight: 500;
+    }
+
+    .pending-count {
+        margin-left: auto;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(56, 189, 248, 0.16);
+        color: var(--accent);
+        font-size: 0.8rem;
+        font-weight: 700;
+        white-space: nowrap;
+    background: rgba(56, 189, 248, 0.1) !important;
+    color: #fff !important;
+    border-color: rgba(56, 189, 248, 0.2) !important;
+    transform: translateX(1px);
+}
+
+.admin-nav-item:hover i {
+    background: rgba(56, 189, 248, 0.18) !important;
+}
+
+.admin-nav-item.active {
+    background: rgba(56, 189, 248, 0.18) !important;
+    color: #fff !important;
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    box-shadow: none !important;
+}
+
+.admin-nav-item.active i {
+    background: rgba(56, 189, 248, 0.25) !important;
+}
+
+.admin-main {
+    flex: 1;
+    margin-left: 280px;
+    padding: 2rem 2.5rem;
+    min-height: 100vh;
+    width: calc(100% - 280px);
+    max-width: none;
+    min-width: 0;
+    box-sizing: border-box;
+    transition: margin-left 0.25s ease;
+}
+
+.admin-main.collapsed {
+    margin-left: 84px;
+    width: calc(100% - 84px);
+    max-width: none;
+}
+
+.admin-welcome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.admin-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.admin-breadcrumb a {
+    color: var(--text-muted);
+    text-decoration: none;
+}
+
+.admin-breadcrumb a:hover {
+    color: var(--accent);
+}
+
+.admin-breadcrumb-separator {
+    color: var(--border);
+}
+
+.admin-breadcrumb-current {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.admin-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.admin-stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+.admin-stat-content {
+    flex: 1;
+}
+
+.admin-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.admin-stat-label {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.admin-stat-meta {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.admin-content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.admin-content-main,
+.admin-content-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.admin-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.75rem;
+    min-height: 150px;
+}
+
+.admin-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1.5rem;
+}
+
+.admin-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.admin-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.admin-card-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.admin-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.95rem 1rem;
+    border-radius: 12px;
+        background: #111827;
+        color: #e2e8f0;
+        text-decoration: none;
+        font-weight: 600;
+        transition: transform 0.2s ease, background 0.2s ease;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .admin-action-btn:hover {
+        transform: translateY(-1px);
+        background: #1f2937;
+    }
+
+    .admin-action-btn.secondary {
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+    }
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem;
+    background: var(--bg-surface);
+    border-radius: 14px;
+    border: 1px solid var(--border-light);
+}
+
+.admin-activity-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.admin-activity-content {
+    flex: 1;
+}
+
+.admin-activity-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.admin-activity-meta {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+}
+
+.admin-activity-badge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+}
+
+@media (max-width: 900px) {
+    .admin-main {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .admin-sidebar {
+        position: relative;
+        top: 0;
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        height: auto;
+    }
+
+    .admin-sidebar.closed {
+        width: 72px;
+        min-width: 72px;
+        position: fixed;
+        top: 70px;
+        left: 0;
+        border-bottom: none;
+        background: transparent;
+        overflow: visible;
+    }
+
+    .admin-sidebar.closed .admin-sidebar-header > div,
+    .admin-sidebar.closed .admin-nav-section,
+    .admin-sidebar.closed .admin-nav-item,
+    .admin-sidebar.closed .admin-nav-title {
+        display: none;
+    }
+
+    .admin-sidebar.closed .admin-sidebar-toggle {
+        margin: 0 auto;
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-surface);
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .admin-sidebar.closed + .admin-main,
+    .admin-main.collapsed {
+        margin-left: 72px;
+        width: calc(100% - 72px);
+    }
+
+    .admin-container {
+        flex-direction: column;
+    }
+
+    .admin-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-main {
+        padding: 1.25rem;
+    }
+
+    .admin-welcome {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-nav-item {
+        padding: 0.85rem 0.9rem;
+    }
+}
+
+/* professional sidebar final overrides */
+.admin-sidebar {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(10, 15, 25, 0.96)) !important;
+    border-radius: 0 32px 32px 0 !important;
+    padding: 2.5rem 1.75rem !important;
+    box-shadow: inset -1px 0 0 rgba(148, 163, 184, 0.08) !important, 0 28px 80px rgba(0, 0, 0, 0.18) !important;
+}
+
+.admin-sidebar-header {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(148, 163, 184, 0.1) !important;
+    padding: 1.25rem 1.3rem 1.1rem !important;
+    border-radius: 24px !important;
+}
+
+.admin-nav-section {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(148, 163, 184, 0.08) !important;
+    padding: 1rem !important;
+    border-radius: 24px !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.admin-nav-item {
+    background: transparent !important;
+    border-color: transparent !important;
+    color: rgba(226, 232, 240, 0.95) !important;
+}
+
+.admin-nav-item:hover {
+    background: rgba(56, 189, 248, 0.12) !important;
+    color: #fff !important;
+    border-color: rgba(56, 189, 248, 0.2) !important;
+    transform: translateX(1px) !important;
+}
+
+.admin-nav-item.active {
+    background: rgba(56, 189, 248, 0.18) !important;
+    color: #fff !important;
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    box-shadow: none !important;
+}
+
+.admin-sidebar-toggle {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(148, 163, 184, 0.14) !important;
+}
+
+.admin-sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.admin-sidebar-title,
+.admin-sidebar-subtitle,
+.admin-nav-title,
+.admin-nav-item .nav-text {
+    color: #e2e8f0 !important;
+}
+
+.admin-sidebar-subtitle {
+    color: rgba(148, 163, 184, 0.9) !important;
+}
+
+.admin-main {
+    flex: 1;
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    transition: margin-left 0.25s ease !important;
+}
+
+.admin-card,
+.admin-card .card,
+.table-responsive {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.admin-card {
+    margin: 0 !important;
+}
+
+.admin-main.full-width {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    {% if request.resolver_match.url_name != 'admin_create_instructor' %}
+    <!-- Sidebar Navigation -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <div>
+                <div class="admin-sidebar-title">Admin Panel</div>
+                <div class="admin-sidebar-subtitle">Control Center</div>
+            </div>
+            <button id="admin-sidebar-toggle" class="admin-sidebar-toggle" type="button" aria-label="Toggle admin sidebar">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+
+        <!-- Main Navigation -->
+        <nav class="admin-nav-section">
+            <div class="admin-nav-title">Overview</div>
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-item{% if request.resolver_match.url_name == 'admin_dashboard' %} active{% endif %}">
+                <i class="bi bi-house"></i>
+                <span class="nav-text">Dashboard</span>
+            </a>
+        </nav>
+
+        <!-- User Management -->
+        <nav class="admin-nav-section">
+            <div class="admin-nav-title">User Management</div>
+            <a href="{% url 'admin_user_list' %}" class="admin-nav-item{% if request.resolver_match.url_name == 'admin_user_list' %} active{% endif %}">
+                <i class="bi bi-people"></i>
+                <span class="nav-text">All Users</span>
+            </a>
+            <a href="{% url 'admin_instructor_list' %}" class="admin-nav-item{% if request.resolver_match.url_name == 'admin_instructor_list' %} active{% endif %}">
+                <i class="bi bi-person-badge"></i>
+                <span class="nav-text">Instructors</span>
+            </a>
+            <a href="{% url 'admin_student_list' %}" class="admin-nav-item{% if request.resolver_match.url_name == 'admin_student_list' %} active{% endif %}">
+                <i class="bi bi-mortarboard"></i>
+                <span class="nav-text">Students</span>
+            </a>
+            <a href="{% url 'admin_create_instructor' %}" class="admin-nav-item{% if request.resolver_match.url_name == 'admin_create_instructor' %} active{% endif %}">
+                <i class="bi bi-person-plus"></i>
+                <span class="nav-text">Add Instructor</span>
+            </a>
+        </nav>
+
+        <!-- System Management -->
+        <nav class="admin-nav-section">
+            <div class="admin-nav-title">System</div>
+            <a href="{% url 'admin_password_requests' %}" class="admin-nav-item{% if request.resolver_match.url_name == 'admin_password_requests' %} active{% endif %}">
+                <i class="bi bi-envelope-exclamation"></i>
+                <span class="nav-text">Password Requests</span>
+                {% if pending_requests_count %}
+                <span class="pending-count">{{ pending_requests_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'logout' %}" class="admin-nav-item">
+                <i class="bi bi-box-arrow-right"></i>
+                <span class="nav-text">Logout</span>
+            </a>
+        </nav>
+    </aside>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="admin-main {% if request.resolver_match.url_name == 'admin_create_instructor' %}full-width{% endif %}">
+        {% block admin_content %}{% endblock %}
+    </main>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const adminSidebar = document.querySelector('.admin-sidebar');
+        const adminMain = document.querySelector('.admin-main');
+        const adminSidebarToggle = document.getElementById('admin-sidebar-toggle');
+
+        function openAdminSidebar() {
+            if (!adminSidebar || !adminMain) return;
+            adminSidebar.classList.remove('closed');
+            adminMain.classList.remove('collapsed');
+        }
+
+        function closeAdminSidebar() {
+            if (!adminSidebar || !adminMain) return;
+            adminSidebar.classList.add('closed');
+            adminMain.classList.add('collapsed');
+        }
+
+        function toggleAdminSidebar() {
+            if (!adminSidebar || !adminMain) return;
+            adminSidebar.classList.contains('closed') ? openAdminSidebar() : closeAdminSidebar();
+        }
+
+        if (adminSidebarToggle) {
+            adminSidebarToggle.addEventListener('click', toggleAdminSidebar);
+        }
+    });
+</script>
+{% endblock %}

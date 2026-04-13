@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+
+{% block title %}Select Subjects - CIS Enrollment{% endblock %}
+
+{% block extra_css %}
+<style>
+    .enrollment-container {
+        max-width: 900px;
+        margin: 3rem auto;
+        background: var(--bg-card);
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    .enrollment-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 1rem;
+    }
+
+    .enrollment-header h1 {
+        color: var(--text-primary);
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .enrollment-info {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: #111827;
+        border-radius: 8px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: #7dd3fc;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .subject-card {
+        border: 2px solid #334155;
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        background: var(--bg-surface);
+    }
+
+    .subject-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .subject-checkbox {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        cursor: pointer;
+    }
+
+    .subject-checkbox input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-top: 0.25rem;
+        cursor: pointer;
+        accent-color: #667eea;
+    }
+
+    .subject-info h3 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+        font-size: 1.1rem;
+    }
+
+    .subject-code {
+        display: inline-block;
+        background: #667eea;
+        color: var(--text-primary);
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .subject-title {
+        color: #666;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .subject-units {
+        color: #999;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+
+    .subject-card input[type="checkbox"]:checked {
+        transform: scale(1.1);
+    }
+
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: var(--text-primary);
+        min-width: 200px;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-attendance {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: var(--text-primary);
+        min-width: 200px;
+    }
+
+    .attendance-nav {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-attendance-large {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        width: 100%;
+        max-width: 360px;
+        padding: 0.95rem 1.5rem;
+        background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 700;
+        border-radius: 12px;
+        text-decoration: none;
+        box-shadow: 0 18px 40px rgba(16, 185, 129, 0.18);
+    }
+
+    .btn-attendance-large:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 46px rgba(16, 185, 129, 0.24);
+    }
+
+    .attendance-nav-note {
+        color: #475569;
+        font-size: 0.92rem;
+        text-align: center;
+        max-width: 500px;
+    }
+
+    .btn-attendance:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-back {
+        background: #e0e0e0;
+        color: #333;
+    }
+
+    .btn-back:hover {
+        background: #1f2937;
+        color: #e2e8f0;
+    }
+
+    .selected-count {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(56, 189, 248, 0.08);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: #a5f3fc;
+    }
+
+    .no-subjects {
+        text-align: center;
+        padding: 2rem;
+        color: #94a3b8;
+    }
+
+    .required-notice {
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        color: #fbbf24;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="enrollment-container">
+    <div class="enrollment-header">
+        <h1>Subject Enrollment</h1>
+        <p>Step 2: Select Your Subjects</p>
+        <div class="enrollment-info">
+            <div class="info-item">
+                <i class="bi bi-mortarboard-fill"></i>
+                <span>{{ year_level }}</span>
+            </div>
+            <div class="info-item">
+                <i class="bi bi-collection-fill"></i>
+                <span>{{ section }}</span>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="required-notice">
+        <i class="bi bi-info-circle"></i>
+        <strong>Important:</strong> Enroll in ALL subjects for your year level and section to be marked as REGULAR. Enrolling in subjects from other years will mark you as IRREGULAR.
+    </div>
+
+    <div class="attendance-nav">
+        <a href="{% url 'attendance_start' %}" class="btn btn-attendance-large">
+            <i class="bi bi-camera-video"></i> Go to Attendance
+        </a>
+        <p class="attendance-nav-note">Tap here after enrollment to open the live attendance scanner.</p>
+    </div>
+
+    <form method="POST" id="enrollmentForm">
+        {% csrf_token %}
+
+        {% if required_subjects %}
+            <div class="selected-count">
+                <span id="selectedCount">0</span> / <span id="totalCount">{{ required_subjects.count }}</span> subjects selected
+            </div>
+
+            <div class="subjects-grid">
+                {% for subject in required_subjects %}
+                    <div class="subject-card">
+                        <label class="subject-checkbox">
+                            <input type="checkbox" name="subjects" value="{{ subject.id }}" 
+                                   {% if subject.id in enrolled_subject_ids %}checked{% endif %}>
+                            <div class="subject-info">
+                                <div class="subject-code">{{ subject.code }}</div>
+                                <h3>{{ subject.name }}</h3>
+                                <p class="subject-title">{{ subject.description }}</p>
+                                <p class="subject-units">
+                                    <i class="bi bi-book"></i> 
+                                    {{ subject.units }} units
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="button-group">
+                <a href="{% url 'enrollment_start' %}" class="btn btn-back">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <a href="{% url 'attendance_start' %}" class="btn btn-attendance">
+                    <i class="bi bi-camera-video"></i> Go to Attendance
+                </a>
+                <button type="submit" class="btn btn-submit">
+                    <i class="bi bi-check-circle"></i> Complete Enrollment
+                </button>
+            </div>
+        {% else %}
+            <div class="no-subjects">
+                <i class="bi bi-inbox" style="font-size: 2rem; margin-bottom: 1rem; display: block; color: #ccc;"></i>
+                <p>No subjects available for your year level and section at this time.</p>
+                <a href="{% url 'dashboard' %}" class="btn btn-submit" style="display: inline-block; margin-top: 1rem;">
+                    Go to Dashboard
+                </a>
+            </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const selectedCount = document.getElementById('selectedCount');
+        
+        function updateCount() {
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            if (selectedCount) {
+                selectedCount.textContent = checked;
+            }
+        }
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateCount);
+        });
+        
+        // Initialize count on page load
+        updateCount();
+    });
+
+    document.getElementById('enrollmentForm').addEventListener('submit', function(e) {
+        const selected = document.querySelectorAll('input[name="subjects"]:checked').length;
+        const total = document.querySelector('#totalCount');
+        
+        if (total && selected === 0) {
+            e.preventDefault();
+            alert('Please select at least one subject.');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

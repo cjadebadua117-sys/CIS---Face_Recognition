@@ -1,0 +1,123 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_title %}{{ user.get_full_name|default:user.username }}'s Attendance{% endblock %}
+{% block title %}Student Dashboard - CIS Attendance{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-header">
+    <div>
+        <p class="page-subtitle">Dashboard</p>
+        <h1 class="page-title">{{ user.get_full_name|default:user.username }}'s Attendance</h1>
+        <p class="text-muted" style="margin-top: 0.25rem;">{{ year_section }}</p>
+    </div>
+    <span class="badge badge-success">
+        <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> System Active
+    </span>
+</div>
+
+<div class="dashboard-grid">
+    <div class="stat-card primary">
+        <div class="stat-label">Attendance Rate</div>
+        <div class="stat-value">{{ attendance_percentage }}<span style="font-size: 1rem; font-weight: 500; color: var(--text-muted);">%</span></div>
+        <div class="stat-meta">{{ present_count }} days present this month</div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-label">Current Streak</div>
+        <div class="stat-value">{{ current_streak }}<span style="font-size: 1rem; font-weight: 500; color: var(--text-muted);"> days</span></div>
+        <div class="stat-meta">Personal best: 12 days</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-label">Absent Days</div>
+        <div class="stat-value">{{ absent_count }}</div>
+        <div class="stat-meta">This month</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Face Status</div>
+        <div class="stat-value" style="font-size: 1.5rem;">
+            {% if face_enrolled %}
+                <span style="color: var(--success);">Active</span>
+            {% else %}
+                <span style="color: var(--warning);">Pending</span>
+            {% endif %}
+        </div>
+        <div class="stat-meta">{% if face_enrolled %}Enrolled & verified{% else %}Complete enrollment{% endif %}</div>
+    </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom: 2rem;">
+    <div class="dashboard-panel">
+        <div class="dashboard-panel-header">
+            <h3 class="dashboard-panel-title">Live Recognition Feed</h3>
+            <span class="badge badge-success">LIVE</span>
+        </div>
+        <div class="camera-panel">
+            <div class="camera-frame">
+                <div class="camera-frame-inner"></div>
+            </div>
+            <div class="camera-footer">
+                <span class="camera-status">
+                    <i class="bi bi-circle-fill" style="font-size: 0.6rem; margin-right: 0.5rem;"></i>
+                    Scanning for faces...
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-panel">
+        <div class="dashboard-panel-header">
+            <h3 class="dashboard-panel-title">Today's Log</h3>
+            <span class="badge badge-info">Today</span>
+        </div>
+        <div class="log-feed">
+            {% for entry in recognition_log %}
+                <div class="log-item">
+                    <span class="log-time">{{ entry.time }}</span>
+                    <span class="log-text">{{ entry.message }}</span>
+                </div>
+            {% empty %}
+                <p class="text-muted" style="padding: 1rem; text-align: center;">No recognition events today</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <div class="dashboard-panel">
+        <div class="dashboard-panel-header">
+            <h3 class="dashboard-panel-title">Weekly Trend</h3>
+        </div>
+        <div class="trend-chart">
+            {% for bar in trend_data %}
+                <div class="trend-bar">
+                    <div class="trend-fill" style="height: calc({{ bar.value|floatformat:0 }} * 1.5px);"></div>
+                    <span class="trend-label">{{ bar.label }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="dashboard-panel">
+        <div class="dashboard-panel-header">
+            <h3 class="dashboard-panel-title">Subject Attendance</h3>
+        </div>
+        <div class="subject-list">
+            {% for subject in subject_attendance %}
+                <div class="subject-item">
+                    <div class="subject-header">
+                        <div>
+                            <div class="subject-code">{{ subject.code }}</div>
+                            <div class="subject-name">{{ subject.name }}</div>
+                        </div>
+                        <span class="subject-percent" style="color: var(--{% if subject.accent == 'cyan' %}accent{% elif subject.accent == 'amber' %}warning{% else %}accent{% endif %});">{{ subject.percent }}%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar {% if subject.accent == 'amber' %}warning{% else %}success{% endif %}" style="width: {{ subject.percent }}%;"></div>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted" style="padding: 1rem; text-align: center;">No subject data available</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

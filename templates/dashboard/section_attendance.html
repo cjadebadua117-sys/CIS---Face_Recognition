@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load tz %}
+
+{% block title %}Attendance - {{ subject.code }} {{ section.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>{{ subject.code }} - {{ section.name }}</h2>
+                    <p class="text-muted mb-0">{{ subject.name }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'instructor_subjects' %}" class="btn btn-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Subjects
+                    </a>
+                    <a href="?export=1{% for key,value in request.GET.items %}{% if key != 'export' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-success">
+                        <i class="fas fa-download"></i> Export CSV
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_from" class="form-label">From Date</label>
+                            <input type="date" name="date_from" id="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_to" class="form-label">To Date</label>
+                            <input type="date" name="date_to" id="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="student" class="form-label">Student Name</label>
+                            <input type="text" name="student" id="student" class="form-control" value="{{ request.GET.student }}" placeholder="Search by name...">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                            <a href="{% url 'section_attendance' subject.id section.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">Today's Attendance Session</h5>
+                        <small class="text-muted">Open or close attendance for this section during the scheduled class.</small>
+                    </div>
+                    {% if today_schedule %}
+                        {% if today_session and today_session.is_open %}
+                        <button id="sessionToggleButton" class="btn btn-success btn-sm" data-action="close" data-session-id="{{ today_session.id }}" data-schedule-id="{{ today_schedule.id }}">
+                            <i class="bi bi-stop-circle"></i> Close Attendance Session
+                        </button>
+                        {% else %}
+                        <button id="sessionToggleButton" class="btn btn-primary btn-sm" data-action="open" data-schedule-id="{{ today_schedule.id }}">
+                            <i class="bi bi-play-circle"></i> Open Attendance Session
+                        </button>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if today_schedule %}
+                        <p class="mb-2"><strong>Scheduled time:</strong> {{ today_schedule.start_time|time:"H:i" }} - {{ today_schedule.end_time|time:"H:i" }}</p>
+                        <p class="mb-2"><strong>Room:</strong> {{ today_schedule.room }}</p>
+                        {% if today_session %}
+                            <p class="mb-0">Current session status: <span class="fw-bold {% if today_session.is_open %}text-success{% else %}text-secondary{% endif %}">
+                                {% if today_session.is_open %}Open{% else %}Closed{% endif %}
+                            </span></p>
+                        {% else %}
+                            <p class="mb-0 text-muted">No attendance session has been started for this schedule today.</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="mb-0 text-muted">No class schedule is set for this section today. Attendance can only be opened on the scheduled day.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Attendance History -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Attendance History</h5>
+                    <span class="badge bg-info">{{ total_records }} records</span>
+                </div>
+                <div class="card-body">
+                    {% if records %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Student</th>
+                                    <th>Time In</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in records %}
+                                <tr>
+                                    <td>{{ record.date|date:"M d, Y" }}</td>
+                                    <td>{% if record.user.first_name or record.user.last_name %}{{ record.user.first_name }} {{ record.user.last_name }}{% else %}{{ record.user.username }}{% endif %}</td>
+                                    <td>{% if record.check_in_time %}{{ record.check_in_time|localtime|time:'g:i a' }}{% else %}&mdash;{% endif %}</td>
+                                    <td>
+                                        <span class="badge bg-{% if record.status == 'PRESENT' %}success{% elif record.status == 'LATE' %}warning{% else %}danger{% endif %}">
+                                            {{ record.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if total_records > 100 %}
+                    <div class="alert alert-info">
+                        Showing first 100 records. Use filters to narrow down results or export for full data.
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <h5>No attendance records found</h5>
+                        <p class="text-muted">Try adjusting your filters or check if students have checked in.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('sessionToggleButton');
+    if (!toggleBtn) return;
+
+    toggleBtn.addEventListener('click', async function() {
+        const action = this.dataset.action;
+        const scheduleId = this.dataset.scheduleId;
+        const sessionId = this.dataset.sessionId;
+
+        this.disabled = true;
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+        try {
+            let response;
+            if (action === 'open') {
+                response = await fetch('/api/attendance/sessions/', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ schedule_id: scheduleId })
+                });
+            } else {
+                if (!sessionId) {
+                    alert('Attendance session ID is missing. Please refresh the page and try again.');
+                    this.innerHTML = originalText;
+                    return;
+                }
+
+                response = await fetch(`/api/attendance/sessions/${sessionId}/`, {
+                    method: 'PATCH',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+            }
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                let errorMessage = 'Unable to update attendance session.';
+                const clone = response.clone();
+                try {
+                    const error = await response.json();
+                    errorMessage = error.error || error.detail || errorMessage;
+                } catch (parseError) {
+                    const text = await clone.text();
+                    errorMessage = text ? `Server error ${response.status}: ${text}` : `Server error: ${response.status} ${response.statusText}`;
+                }
+                alert(errorMessage);
+                this.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Session toggle request failed:', error);
+            alert(`Network error while updating the attendance session: ${error.message}`);
+            this.innerHTML = originalText;
+        } finally {
+            this.disabled = false;
+        }
+    });
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+});
+</script>
+{% endblock %}

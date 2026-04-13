@@ -1,0 +1,152 @@
+{% extends 'accounts/admin_base.html' %}
+{% block admin_page_title %}Dashboard{% endblock %}
+
+{% block admin_content %}
+<header class="admin-header">
+    <div class="admin-welcome">
+        <div>
+            <h1 style="margin: 0; font-size: 2rem; color: var(--text-primary);">Admin Dashboard</h1>
+            <p style="margin: 0.5rem 0 0 0; color: var(--text-muted);">Welcome back, {{ user.get_full_name|default:user.username }}</p>
+        </div>
+        <div style="font-size: 0.95rem; color: var(--text-muted);">{{ current_time|date:"F j, Y" }}</div>
+    </div>
+</header>
+
+<section class="admin-stats-grid">
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background: linear-gradient(135deg, var(--success), var(--success-light));">
+            <i class="bi bi-person-badge" style="color: var(--text-primary);"></i>
+        </div>
+        <div class="admin-stat-content">
+            <div class="admin-stat-value">{{ instructors_count }}</div>
+            <div class="admin-stat-label">Instructors</div>
+            <div class="admin-stat-meta">Teaching Staff</div>
+        </div>
+    </div>
+
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background: linear-gradient(135deg, var(--accent), var(--accent-light));">
+            <i class="bi bi-mortarboard" style="color: var(--text-primary);"></i>
+        </div>
+        <div class="admin-stat-content">
+            <div class="admin-stat-value">{{ students_count }}</div>
+            <div class="admin-stat-label">Students</div>
+            <div class="admin-stat-meta">Enrolled Learners</div>
+        </div>
+    </div>
+
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background: linear-gradient(135deg, var(--info), var(--info-light));">
+            <i class="bi bi-book" style="color: var(--text-primary);"></i>
+        </div>
+        <div class="admin-stat-content">
+            <div class="admin-stat-value">{{ subjects_count }}</div>
+            <div class="admin-stat-label">Subjects</div>
+            <div class="admin-stat-meta">Course Offerings</div>
+        </div>
+    </div>
+
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon" style="background: linear-gradient(135deg, var(--warning), var(--warning-light));">
+            <i class="bi bi-clock" style="color: var(--text-primary);"></i>
+        </div>
+        <div class="admin-stat-content">
+            <div class="admin-stat-value">{{ pending_requests_count }}</div>
+            <div class="admin-stat-label">Pending Requests</div>
+            <div class="admin-stat-meta">Awaiting Review</div>
+        </div>
+    </div>
+</section>
+
+<div class="admin-content-grid">
+    <div class="admin-content-main">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title">Attendance Overview</h3>
+            </div>
+            <div style="display: grid; gap: 1.5rem;">
+                <p style="color: var(--text-muted); line-height: 1.7;">
+                    Your system is built to manage face recognition attendance securely and efficiently. Use this dashboard to monitor users, approve requests, and ensure the attendance process runs smoothly.
+                </p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                    <div class="admin-stat-card" style="padding: 1rem; border-radius: 16px;">
+                        <div class="admin-stat-label">Active Attendance Mode</div>
+                        <div class="admin-stat-value">Face Recognition</div>
+                        <div class="admin-stat-meta">Realtime biometric check-ins</div>
+                    </div>
+                    <div class="admin-stat-card" style="padding: 1rem; border-radius: 16px;">
+                        <div class="admin-stat-label">Request Handling</div>
+                        <div class="admin-stat-value">{{ pending_requests_count }}</div>
+                        <div class="admin-stat-meta">Pending password resets / approvals</div>
+                    </div>
+                    <div class="admin-stat-card" style="padding: 1rem; border-radius: 16px;">
+                        <div class="admin-stat-label">System Reliability</div>
+                        <div class="admin-stat-value">Stable</div>
+                        <div class="admin-stat-meta">Monitor database and camera status</div>
+                    </div>
+                </div>
+                <div style="display: grid; gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="bi bi-camera-video-fill" style="font-size: 1.25rem; color: var(--accent);"></i>
+                        <span style="color: var(--text-primary); font-weight: 600;">Ready for attendance capture</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="bi bi-people-fill" style="font-size: 1.25rem; color: var(--success);"></i>
+                        <span style="color: var(--text-primary); font-weight: 600;">Students and instructors are synced</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="bi bi-shield-check" style="font-size: 1.25rem; color: var(--warning);"></i>
+                        <span style="color: var(--text-primary); font-weight: 600;">Security checks are active</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-content-sidebar">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title">Quick Actions</h3>
+            </div>
+            <div class="admin-quick-actions">
+                <a href="{% url 'admin_create_instructor' %}" class="admin-action-btn">
+                    <i class="bi bi-person-plus"></i>
+                    Add Instructor
+                </a>
+                <a href="{% url 'admin_user_list' %}" class="admin-action-btn secondary">
+                    <i class="bi bi-people"></i>
+                    Manage Users
+                </a>
+                <a href="{% url 'admin_password_requests' %}" class="admin-action-btn secondary">
+                    <i class="bi bi-envelope-exclamation"></i>
+                    Password Requests
+                </a>
+                <a href="#" class="admin-action-btn secondary">
+                    <i class="bi bi-gear"></i>
+                    System Settings
+                </a>
+            </div>
+        </div>
+
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title">System Status</h3>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></div>
+                    <span style="font-size: 0.9rem;">Database: Online</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></div>
+                    <span style="font-size: 0.9rem;">Face Recognition: Active</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></div>
+                    <span style="font-size: 0.9rem;">Attendance System: Running</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CIS - Face Recognition Attendance System{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Tailwind Utilities -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-inner">
+            <!-- Brand -->
+            {% block admin_nav_toggle %}{% endblock %}
+            <a href="{% if user.is_authenticated %}{% if user.role == 'INSTRUCTOR' %}{% url 'instructor_subjects' %}{% elif user.is_superuser %}{% url 'admin_dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}{% else %}{% url 'login' %}{% endif %}" class="nav-brand">
+                <div class="nav-brand-icon">
+                    <i class="bi bi-camera-video"></i>
+                </div>
+                <div class="nav-brand-text">
+                    <span class="nav-title">Face Recognition</span>
+                    <span class="nav-subtitle">Attendance System</span>
+                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <div class="nav-links">
+                {% if user.is_authenticated %}
+                    {% if user.is_superuser %}
+                        <a href="{% url 'admin_dashboard' %}" {% if request.resolver_match.url_name == 'admin_dashboard' %}class="active"{% endif %}>
+                            <i class="bi bi-shield-check"></i> Admin Panel
+                        </a>
+                        <a href="{% url 'admin_user_list' %}" {% if request.resolver_match.url_name == 'admin_user_list' %}class="active"{% endif %}>
+                            <i class="bi bi-people"></i> Accounts
+                        </a>
+                        <a href="{% url 'admin_password_requests' %}" {% if request.resolver_match.url_name == 'admin_password_requests' %}class="active"{% endif %}>
+                            <i class="bi bi-envelope-exclamation"></i> Requests
+                        </a>
+                    {% elif user.role == 'INSTRUCTOR' %}
+                        <a href="{% url 'instructor_subjects' %}" {% if request.resolver_match.url_name == 'instructor_subjects' %}class="active"{% endif %}>
+                            <i class="bi bi-book"></i> My Subjects
+                        </a>
+                        <a href="{% url 'attendance_records' %}" {% if request.resolver_match.url_name == 'attendance_records' %}class="active"{% endif %}>
+                            <i class="bi bi-table"></i> Attendance History
+                        </a>
+                    {% else %}
+                        <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                        <a href="{% url 'attendance_start' %}" {% if request.resolver_match.url_name == 'attendance_start' %}class="active"{% endif %}>
+                            <i class="bi bi-camera"></i> Attendance
+                        </a>
+                        <a href="{% url 'attendance_records' %}" {% if request.resolver_match.url_name == 'attendance_records' %}class="active"{% endif %}>
+                            <i class="bi bi-table"></i> Attendance History
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'login' %}">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </a>
+                    <a href="{% url 'register' %}">
+                        <i class="bi bi-person-plus"></i> Register
+                    </a>
+                {% endif %}
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <script>
+        function toggleUserMenu() {
+            const menu = document.getElementById('userMenu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('userMenu');
+            if (userMenu && event.target.closest('#userMenu') === null &&
+                event.target.closest('.user-avatar') === null) {
+                userMenu.classList.add('hidden');
+            }
+        });
+    </script>
+
+    <!-- Toast Notification System -->
+    <script>
+    class ToastManager {
+        constructor() {
+            this.container = document.getElementById('toastContainer');
+        }
+
+        show(message, type = 'info', duration = 5000) {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const icons = {
+                success: 'check-circle',
+                error: 'exclamation-circle',
+                warning: 'exclamation-triangle',
+                info: 'info-circle'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i class="bi bi-${icons[type] || 'info-circle'}"></i>
+                </div>
+                <div class="toast-message">${message}</div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            `;
+
+            this.container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+        }
+    }
+
+    const toastManager = new ToastManager();
+
+    function showToast(message, type = 'info', duration = 5000) {
+        toastManager.show(message, type, duration);
+    }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+    {% block extra_script %}{% endblock %}
+</body>
+</html>

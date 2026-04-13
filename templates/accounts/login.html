@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Login - CIS Face Recognition Attendance{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <!-- Header -->
+        <div class="login-header">
+            <div class="login-icon">
+                <i class="bi bi-camera-video-fill"></i>
+            </div>
+            <h1>Sign In</h1>
+            <p>Access your attendance management portal</p>
+        </div>
+
+        <!-- Form Body -->
+        <div class="login-body">
+
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Username Field -->
+                <div class="form-group">
+                    <label for="id_username" class="form-label">Email or Username</label>
+                    <div class="input-with-icon">
+                        <i class="bi bi-person input-icon"></i>
+                        <input type="text" name="username" id="id_username" class="form-control ps-5" placeholder="Enter your email or username" required>
+                    </div>
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="passwordInput" class="form-label">Password</label>
+                    <div class="input-with-icon">
+                        <i class="bi bi-lock input-icon"></i>
+                        <input type="password" name="password" id="passwordInput" class="form-control ps-5" placeholder="Enter your password" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            <i id="toggleIcon" class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="form-group mb-3">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="remember_me!" id="rememberMe!" class="form-checkbox">
+                        <span class="checkbox-text">Remember me!</span>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-lg btn-block">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </button>
+
+                <!-- Forgot Password -->
+                <div class="form-note">
+                    <a href="{% url 'password_reset_request' %}">Forgot Password?</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="login-footer">
+            <p>Don't have an account? <a href="{% url 'register' %}">Create one here</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePassword() {
+        const passwordInput = document.getElementById('passwordInput');
+        const toggleIcon = document.getElementById('toggleIcon');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('bi-eye');
+            toggleIcon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('bi-eye-slash');
+            toggleIcon.classList.add('bi-eye');
+        }
+    }
+</script>
+{% endblock %}

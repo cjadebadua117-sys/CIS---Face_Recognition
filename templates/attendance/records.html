@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load tz %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h4 class="card-title mb-3">{{ history_title|default:'Attendance History' }}</h4>
+
+        <!-- Summary Statistics Bar -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-success bg-opacity-10 border-success border-opacity-20">
+                    <div class="card-body text-center">
+                        <div class="text-success fs-2 fw-bold">{{ summary_stats.present }}</div>
+                        <div class="text-success text-uppercase fs-7">Present</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger bg-opacity-10 border-danger border-opacity-20">
+                    <div class="card-body text-center">
+                        <div class="text-danger fs-2 fw-bold">{{ summary_stats.absent }}</div>
+                        <div class="text-danger text-uppercase fs-7">Absent</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning bg-opacity-10 border-warning border-opacity-20">
+                    <div class="card-body text-center">
+                        <div class="text-warning fs-2 fw-bold">{{ summary_stats.late }}</div>
+                        <div class="text-warning text-uppercase fs-7">Late</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info bg-opacity-10 border-info border-opacity-20">
+                    <div class="card-body text-center">
+                        <div class="text-info fs-2 fw-bold">{{ summary_stats.total }}</div>
+                        <div class="text-info text-uppercase fs-7">Total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="get" class="row gy-2 gx-3 align-items-end mb-4">
+            <div class="col-md-3">
+                <label class="form-label">Date From</label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Date To</label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Department</label>
+                <input type="text" name="department" class="form-control" placeholder="Department" value="{{ department }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Section</label>
+                <select name="section" class="form-select">
+                    <option value="">Any</option>
+                    {% for name in section_names %}
+                        <option value="{{ name }}" {% if section == name %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">Any</option>
+                    <option value="PRESENT" {% if status == 'PRESENT' %}selected{% endif %}>Present</option>
+                    <option value="LATE" {% if status == 'LATE' %}selected{% endif %}>Late</option>
+                    <option value="ABSENT" {% if status == 'ABSENT' %}selected{% endif %}>Absent</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" type="submit">Filter</button>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Name</th>
+                        <th>ID</th>
+                        <th>Department</th>
+                        <th>Section</th>
+                        <th>Time In</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr class="expandable-row" data-details-id="details-{{ record.id }}">
+                            <td>{{ record.date }}</td>
+                            <td>{% if record.user.first_name or record.user.last_name %}{{ record.user.first_name }} {{ record.user.last_name }}{% else %}{{ record.user.username }}{% endif %}</td>
+                            <td>{{ record.user.student_id|default:'—' }}</td>
+                            <td>{{ record.user.department|default:'—' }}</td>
+                            <td>{{ record.schedule.section.name|default:'—' }}</td>
+                            <td>{% if record.check_in_time %}{{ record.check_in_time|localtime|time:'g:i a' }}{% else %}&mdash;{% endif %}</td>
+                            <td>
+                                <span class="badge badge-status badge-{{ record.status|lower }}">
+                                    {{ record.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="row-details" id="details-{{ record.id }}">
+                            <td colspan="7">
+                                <div class="row-details-content">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Class Details</h6>
+                                            <p><strong>Subject:</strong> {{ record.schedule.section.subject.name|default:'N/A' }}</p>
+                                            <p><strong>Subject Code:</strong> {{ record.schedule.section.subject.code|default:'N/A' }}</p>
+                                            <p><strong>Teacher:</strong> {{ record.schedule.section.subject.instructor.get_full_name|default:'N/A' }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Attendance Details</h6>
+                                            <p><strong>Check-in Time:</strong> {% if record.check_in_time %}{{ record.check_in_time|localtime|time:'g:i a' }}{% else %}&mdash;{% endif %}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No attendance records found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination mt-3">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&date_from={{ date_from }}&date_to={{ date_to }}&department={{ department }}&section={{ section }}&status={{ status }}">Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+                <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&date_from={{ date_from }}&date_to={{ date_to }}&department={{ department }}&section={{ section }}&status={{ status }}">Next</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Expandable row functionality
+    const expandableRows = document.querySelectorAll('.expandable-row');
+
+    expandableRows.forEach(row => {
+        row.addEventListener('click', function() {
+            const detailsId = this.dataset.detailsId;
+            const detailsRow = document.getElementById(detailsId);
+
+            if (detailsRow) {
+                detailsRow.classList.toggle('expanded');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

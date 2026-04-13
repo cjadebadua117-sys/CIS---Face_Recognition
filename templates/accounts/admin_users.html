@@ -1,0 +1,55 @@
+{% extends 'accounts/admin_base.html' %}
+{% block admin_page_title %}User Management{% endblock %}
+
+{% block admin_content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Manage User Accounts</h2>
+        <div class="admin-card-actions">
+            <a href="{% url 'admin_create_instructor' %}" class="btn btn-primary">Create Instructor</a>
+        </div>
+    </div>
+
+    {% if users %}
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.get_full_name|default:user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.get_role_display }}</td>
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.date_joined|date:'M d, Y' }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'admin_edit_user' user.id %}" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                                <a href="{% url 'admin_change_user_password' user.id %}" class="btn btn-sm btn-outline-warning me-1">Password</a>
+                                <a href="{% url 'admin_toggle_user_status' user.id %}" class="btn btn-sm btn-outline-info me-1">{% if user.is_active %}Deactivate{% else %}Activate{% endif %}</a>
+                                <a href="{% url 'admin_delete_user' user.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this user? This action cannot be undone.');">Delete</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">No instructor or student accounts found.</div>
+    {% endif %}
+</div>
+{% endblock %}

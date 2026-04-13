@@ -1,0 +1,54 @@
+{% extends 'accounts/admin_base.html' %}
+{% block admin_page_title %}Instructors{% endblock %}
+
+{% block admin_content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <div>
+            <h2 class="admin-card-title">Instructor Accounts</h2>
+            <p class="text-muted" style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">Only admins can create and manage instructor accounts.</p>
+        </div>
+        <a href="{% url 'admin_create_instructor' %}" class="btn btn-primary">Create Instructor</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Username</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for instructor in instructors %}
+                        <tr>
+                            <td>{{ instructor.get_full_name|default:instructor.username }}</td>
+                            <td>{{ instructor.email }}</td>
+                            <td>{{ instructor.username }}</td>
+                            <td>{{ instructor.department|default:'N/A' }}</td>
+                            <td>{{ instructor.is_active|yesno:'Active,Inactive' }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'admin_edit_user' instructor.id %}" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                                <a href="{% url 'admin_change_user_password' instructor.id %}" class="btn btn-sm btn-outline-warning me-1">Reset Password</a>
+                                <form action="{% url 'admin_delete_user' instructor.id %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">No instructor accounts found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
