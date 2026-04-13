@@ -35,44 +35,34 @@ class EnhancedLoginForm(AuthenticationForm):
 
     def clean(self):
         """Enhanced validation with username/email support"""
-        # First call Form.clean() to populate cleaned_data
-        from django import forms
-        forms.Form.clean(self)
-        
         cleaned_data = self.cleaned_data
         username = cleaned_data.get('username')
-        
+
         if username:
-            # Try to find user by email first, then by username
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            
-            # Check if input looks like email
+
             if '@' in username:
                 try:
-                    user = User.objects.get(email=username)
-                    cleaned_data['username'] = user.email
+                    user = User.objects.get(email__iexact=username)
+                    cleaned_data['username'] = user.email or username
                 except User.DoesNotExist:
-                    # Try username as fallback
                     try:
-                        user = User.objects.get(username=username)
-                        cleaned_data['username'] = user.email
+                        user = User.objects.get(username__iexact=username)
+                        cleaned_data['username'] = user.email or username
                     except User.DoesNotExist:
-                        pass
+                        cleaned_data['username'] = username
             else:
-                # Try username first, then email
                 try:
-                    user = User.objects.get(username=username)
-                    cleaned_data['username'] = user.email
+                    user = User.objects.get(username__iexact=username)
+                    cleaned_data['username'] = user.username
                 except User.DoesNotExist:
-                    # Try email as fallback
                     try:
-                        user = User.objects.get(email=username)
-                        cleaned_data['username'] = user.email
+                        user = User.objects.get(email__iexact=username)
+                        cleaned_data['username'] = user.email or username
                     except User.DoesNotExist:
-                        pass
-        
-        # Now call AuthenticationForm's clean for authentication
+                        cleaned_data['username'] = username
+
         return super().clean()
 
 

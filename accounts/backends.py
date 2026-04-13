@@ -17,7 +17,7 @@ class UsernameOrEmailBackend(ModelBackend):
             if '@' in username:
                 user = UserModel.objects.get(email__iexact=username)
             else:
-                user = UserModel.objects.get(username=username)
+                user = UserModel.objects.get(username__iexact=username)
         except UserModel.DoesNotExist:
             return None
 

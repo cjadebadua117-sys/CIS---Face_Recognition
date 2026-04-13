@@ -19,6 +19,14 @@
             <form method="post">
                 {% csrf_token %}
 
+                {% if messages %}
+                <div class="mb-3">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 <!-- Username Field -->
                 <div class="form-group">
                     <label for="id_username" class="form-label">Email or Username</label>
@@ -42,8 +50,8 @@
 
                 <!-- Remember Me -->
                 <div class="form-group mb-3">
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="remember_me!" id="rememberMe!" class="form-checkbox">
+                    <label class="checkbox-label" for="id_remember_me">
+                        <input type="checkbox" name="remember_me" id="id_remember_me" class="form-checkbox">
                         <span class="checkbox-text">Remember me!</span>
                     </label>
                 </div>
